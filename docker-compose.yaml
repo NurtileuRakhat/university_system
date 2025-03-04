@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: university_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Nurtiley17
+      POSTGRES_DB: golang
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: university_system
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: Nurtiley17
+      DB_NAME: golang
+      PORT: 8080
+
+volumes:
+  pg_data:

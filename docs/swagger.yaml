@@ -1,0 +1,1551 @@
+definitions:
+  gin.H:
+    additionalProperties: {}
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  university_system_internal_university_models.AccessTokenResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  university_system_internal_university_models.AuthResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  university_system_internal_university_models.Course:
+    properties:
+      course_code:
+        type: string
+      course_faculty:
+        type: string
+      course_name:
+        type: string
+      course_time:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      students:
+        items:
+          $ref: '#/definitions/university_system_internal_university_models.Student'
+        type: array
+      teachers:
+        items:
+          $ref: '#/definitions/university_system_internal_university_models.Teacher'
+        type: array
+      updatedAt:
+        type: string
+    required:
+    - course_code
+    - course_faculty
+    - course_name
+    type: object
+  university_system_internal_university_models.CourseMark:
+    properties:
+      course:
+        $ref: '#/definitions/university_system_internal_university_models.Course'
+      course_id:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      final_exam_mark:
+        type: number
+      first_attestation:
+        type: number
+      grade:
+        type: string
+      id:
+        type: integer
+      mark:
+        type: number
+      second_attestation:
+        type: number
+      student:
+        $ref: '#/definitions/university_system_internal_university_models.Student'
+      student_id:
+        type: integer
+      teacher:
+        $ref: '#/definitions/university_system_internal_university_models.Teacher'
+      teacher_id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  university_system_internal_university_models.ErrorResponse:
+    description: Структура ошибки API
+    properties:
+      error:
+        description: |-
+          Сообщение об ошибке
+          @example "Invalid request"
+        type: string
+      message:
+        type: string
+    type: object
+  university_system_internal_university_models.LoginRequest:
+    properties:
+      password:
+        example: mypassword
+        type: string
+      username:
+        example: user123
+        type: string
+    type: object
+  university_system_internal_university_models.Manager:
+    properties:
+      birthdate:
+        description: Дата рождения
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        description: Email пользователя (уникальный)
+        type: string
+      firstname:
+        description: Имя пользователя
+        type: string
+      id:
+        type: integer
+      lastname:
+        description: Фамилия пользователя
+        type: string
+      password:
+        description: Пароль пользователя
+        minLength: 4
+        type: string
+      role:
+        description: Роль пользователя (админ, студент, учитель и т. д.)
+        type: string
+      updatedAt:
+        type: string
+      username:
+        description: Уникальное имя пользователя
+        minLength: 3
+        type: string
+    required:
+    - email
+    - firstname
+    - lastname
+    - password
+    - username
+    type: object
+  university_system_internal_university_models.RefreshRequest:
+    properties:
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  university_system_internal_university_models.Student:
+    properties:
+      birthdate:
+        description: Дата рождения
+        type: string
+      courses:
+        items:
+          $ref: '#/definitions/university_system_internal_university_models.Course'
+        type: array
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        description: Email пользователя (уникальный)
+        type: string
+      faculty:
+        type: string
+      firstname:
+        description: Имя пользователя
+        type: string
+      id:
+        type: integer
+      lastname:
+        description: Фамилия пользователя
+        type: string
+      password:
+        description: Пароль пользователя
+        minLength: 4
+        type: string
+      role:
+        description: Роль пользователя (админ, студент, учитель и т. д.)
+        type: string
+      student_year:
+        type: integer
+      updatedAt:
+        type: string
+      username:
+        description: Уникальное имя пользователя
+        minLength: 3
+        type: string
+    required:
+    - email
+    - firstname
+    - lastname
+    - password
+    - username
+    type: object
+  university_system_internal_university_models.Teacher:
+    properties:
+      birthdate:
+        description: Дата рождения
+        type: string
+      courses:
+        items:
+          $ref: '#/definitions/university_system_internal_university_models.Course'
+        type: array
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        description: Email пользователя (уникальный)
+        type: string
+      firstname:
+        description: Имя пользователя
+        type: string
+      id:
+        type: integer
+      lastname:
+        description: Фамилия пользователя
+        type: string
+      password:
+        description: Пароль пользователя
+        minLength: 4
+        type: string
+      role:
+        description: Роль пользователя (админ, студент, учитель и т. д.)
+        type: string
+      updatedAt:
+        type: string
+      username:
+        description: Уникальное имя пользователя
+        minLength: 3
+        type: string
+    required:
+    - email
+    - firstname
+    - lastname
+    - password
+    - username
+    type: object
+  university_system_internal_university_models.User:
+    description: Пользователь системы с уникальными данными
+    properties:
+      birthdate:
+        description: Дата рождения
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        description: Email пользователя (уникальный)
+        type: string
+      firstname:
+        description: Имя пользователя
+        type: string
+      id:
+        type: integer
+      lastname:
+        description: Фамилия пользователя
+        type: string
+      password:
+        description: Пароль пользователя
+        minLength: 4
+        type: string
+      role:
+        description: Роль пользователя (админ, студент, учитель и т. д.)
+        type: string
+      updatedAt:
+        type: string
+      username:
+        description: Уникальное имя пользователя
+        minLength: 3
+        type: string
+    required:
+    - email
+    - firstname
+    - lastname
+    - password
+    - username
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: n_rakhat@kbtu.kz
+    name: Rakhat Nurtileu
+    url: http://linkedin.com/in/nurtileu-rakhat-02aba3294/
+  description: System для управления пользователями, курсами и ролями
+  title: University System
+  version: "1.0"
+paths:
+  /api/students:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех студентов в системе
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Student'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить список всех студентов
+      tags:
+      - students
+    post:
+      consumes:
+      - application/json
+      description: Добавляет нового студента в систему
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные нового студента
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Student'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Student'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать нового студента
+      tags:
+      - students
+  /api/students/{id}:
+    delete:
+      description: Удаляет студента по его ID
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID студента
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить студента
+      tags:
+      - students
+    get:
+      consumes:
+      - application/json
+      description: Возвращает данные студента по его ID
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID студента
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Student'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить информацию о студенте
+      tags:
+      - students
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о студенте
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID студента
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Обновленные данные студента
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Student'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Student'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить данные студента
+      tags:
+      - students
+  /api/students/{id}/courses:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список курсов, на которые записан студент
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID студента
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Course'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить курсы студента
+      tags:
+      - students
+  /api/students/{student_id}/courses/{course_id}:
+    post:
+      description: Записывает студента на указанный курс
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID студента
+        in: path
+        name: student_id
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: course_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Записать студента на курс
+      tags:
+      - students
+  /api/teachers:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех преподавателей в системе
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Teacher'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить список всех преподавателей
+      tags:
+      - teachers
+    post:
+      consumes:
+      - application/json
+      description: Добавляет нового преподавателя в систему
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные нового преподавателя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Teacher'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Teacher'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создать нового преподавателя
+      tags:
+      - teachers
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о преподавателе
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Обновленные данные преподавателя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Teacher'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Teacher'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновить данные преподавателя
+      tags:
+      - teachers
+  /api/teachers/{id}:
+    delete:
+      description: Удаляет преподавателя по его ID
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID преподавателя
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удалить преподавателя
+      tags:
+      - teachers
+    get:
+      consumes:
+      - application/json
+      description: Возвращает данные преподавателя по его ID
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID преподавателя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Teacher'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить информацию о преподавателе
+      tags:
+      - teachers
+  /api/teachers/{id}/courses:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список курсов, которые ведет преподаватель
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID преподавателя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Course'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получить курсы преподавателя
+      tags:
+      - teachers
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает всех пользователей системы
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.User'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - users
+  /api/users/{id}:
+    delete:
+      description: Удаляет пользователя по его ID
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Пользователь успешно удалён
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Удаление пользователя
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: get user by id
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: get user by id
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о пользователе по его ID
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Обновлённые данные пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.User'
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Обновление данных пользователя
+      tags:
+      - users
+  /courses:
+    get:
+      description: Возвращает список всех курсов в системе
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Course'
+            type: array
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить все курсы
+      tags:
+      - courses
+    post:
+      consumes:
+      - application/json
+      description: Создает новый курс в системе
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные курса
+        in: body
+        name: course
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Course'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Course'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Создать курс
+      tags:
+      - courses
+  /courses/{id}:
+    delete:
+      description: Удаляет курс из системы по его уникальному идентификатору
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Курс удален
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Неверный ID
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Удалить курс
+      tags:
+      - courses
+    get:
+      description: Возвращает курс по его уникальному идентификатору
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Course'
+        "400":
+          description: Неверный ID
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Курс не найден
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить курс по ID
+      tags:
+      - courses
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о существующем курсе
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные курса
+        in: body
+        name: course
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Course'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Course'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Обновить курс
+      tags:
+      - courses
+  /courses/{id}/students:
+    get:
+      description: Возвращает список студентов, записанных на данный курс
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Student'
+            type: array
+        "400":
+          description: Неверный ID
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить студентов курса
+      tags:
+      - courses
+  /courses/{id}/teachers:
+    get:
+      description: Возвращает список преподавателей, ведущих данный курс
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Teacher'
+            type: array
+        "400":
+          description: Неверный ID
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить преподавателей курса
+      tags:
+      - courses
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Войти в систему, получив access и refresh токены
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      summary: Login
+      tags:
+      - Authorization
+  /managers:
+    get:
+      description: Возвращает список всех менеджеров из базы данных.
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список менеджеров
+          schema:
+            items:
+              $ref: '#/definitions/university_system_internal_university_models.Manager'
+            type: array
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить всех менеджеров
+      tags:
+      - managers
+    post:
+      consumes:
+      - application/json
+      description: Добавляет нового менеджера в систему.
+      parameters:
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные нового менеджера
+        in: body
+        name: manager
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Manager'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданный менеджер
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Manager'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Создать менеджера
+      tags:
+      - managers
+    put:
+      consumes:
+      - application/json
+      description: Изменяет данные менеджера.
+      parameters:
+      - description: Обновленные данные менеджера
+        in: body
+        name: manager
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.Manager'
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленный менеджер
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Manager'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Обновить менеджера
+      tags:
+      - managers
+  /managers/{id}:
+    delete:
+      description: Удаляет менеджера из системы по его идентификатору.
+      parameters:
+      - description: ID менеджера
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Успешное удаление
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Удалить менеджера
+      tags:
+      - managers
+    get:
+      description: Возвращает данные менеджера по его идентификатору.
+      parameters:
+      - description: ID менеджера
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные менеджера
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.Manager'
+        "400":
+          description: Некорректный ID
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Менеджер не найден
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить менеджера по ID
+      tags:
+      - managers
+  /managers/assign/{teacher_id}/{course_id}:
+    post:
+      description: Привязывает преподавателя к курсу.
+      parameters:
+      - description: ID преподавателя
+        in: path
+        name: teacher_id
+        required: true
+        type: string
+      - description: Bearer токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: course_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Успешное назначение
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Назначить преподавателя на курс
+      tags:
+      - managers
+  /marks/{id}/{student_id}/{course_id}:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет оценку студенту по курсу, проверяя, является ли учитель
+        преподавателем данного курса.
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID студента
+        in: path
+        name: student_id
+        required: true
+        type: integer
+      - description: ID курса
+        in: path
+        name: course_id
+        required: true
+        type: integer
+      - description: ID учителя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Оценка
+        in: body
+        name: mark
+        required: true
+        schema:
+          type: number
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Оценка добавлена
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Ошибка ввода
+          schema:
+            $ref: '#/definitions/gin.H'
+        "403":
+          description: Запрещено
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Добавить оценку студенту
+      tags:
+      - marks
+  /marks/course/{course_id}:
+    get:
+      description: Возвращает все оценки студентов по заданному курсу.
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID курса
+        in: path
+        name: course_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.CourseMark'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить оценки по курсу
+      tags:
+      - marks
+  /marks/student/{student_id}:
+    get:
+      description: Возвращает все оценки студента по всем курсам.
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID студента
+        in: path
+        name: student_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.CourseMark'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - BearerAuth: []
+      summary: Получить оценки студента
+      tags:
+      - marks
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: Получение нового access-токена с помощью refresh-токена
+      parameters:
+      - description: Refresh-токен
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.AccessTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      summary: Обновление access-токена
+      tags:
+      - Authorization
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт нового пользователя в системе
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/university_system_internal_university_models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/university_system_internal_university_models.ErrorResponse'
+      summary: Создание пользователя
+      tags:
+      - Authorization
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
