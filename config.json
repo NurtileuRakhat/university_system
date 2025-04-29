@@ -1,5 +1,0 @@
-{
-  "port": "8080",
-  "connection_string": "host=localhost user=postgres password=Nurtiley17 dbname=golang port=5432 sslmode=disable TimeZone=UTC",
-  "secret_key": "your-very-secure-secret-key"
-}

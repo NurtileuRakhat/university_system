@@ -1,0 +1,37 @@
+@startuml TeacherGrading
+actor Teacher
+participant "Gin Router" as API
+participant MarkController
+participant GradeRepository
+database DB
+
+== First attestation ==
+Teacher -> API: POST /teachers/{id}/courses/{cid}/students/{sid}/PutFirstAtt
+API -> MarkController: AddFirstAttestation(ctx, sid, cid, mark)
+MarkController -> GradeRepository: AddFirstAttestation(ctx, sid, cid, mark)
+GradeRepository -> DB: UPDATE grades\n SET first_attestation = mark\n WHERE student_id = sid AND course_id = cid;
+DB --> GradeRepository: result
+GradeRepository --> MarkController: nil
+MarkController --> API: 200 OK
+API --> Teacher: response
+
+== Second attestation ==
+Teacher -> API: POST /teachers/{id}/courses/{cid}/students/{sid}/PutSecondAtt
+API -> MarkController: AddSecondAttestation(ctx, sid, cid, mark)
+MarkController -> GradeRepository: AddSecondAttestation(ctx, sid, cid, mark)
+GradeRepository -> DB: UPDATE grades\n SET second_attestation = mark\n WHERE student_id = sid AND course_id = cid;
+DB --> GradeRepository: result
+GradeRepository --> MarkController: nil
+MarkController --> API: 200 OK
+API --> Teacher: response
+
+== Final mark ==
+Teacher -> API: POST /teachers/{id}/courses/{cid}/students/{sid}/PutFinalMark
+API -> MarkController: AddFinalExamMark(ctx, sid, cid, mark)
+MarkController -> GradeRepository: AddFinalExamMark(ctx, sid, cid, mark)
+GradeRepository -> DB: UPDATE grades\n SET final_mark = mark\n WHERE student_id = sid AND course_id = cid;
+DB --> GradeRepository: result
+GradeRepository --> MarkController: nil
+MarkController --> API: 200 OK
+API --> Teacher: response
+@enduml

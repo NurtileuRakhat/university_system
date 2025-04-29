@@ -4,32 +4,32 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"strconv"
-	"university_system/internal/university/models"
-	"university_system/internal/university/repository"
+	"university_system/internal/domain/models"
+	"university_system/internal/university/services"
 )
 
 type StudentController struct {
-	studentRepo repository.StudentRepository
+	studentService services.StudentService
 }
 
-func NewStudentController(studentRepo repository.StudentRepository) *StudentController {
-	return &StudentController{studentRepo: studentRepo}
+func NewStudentController(service services.StudentService) *StudentController {
+	return &StudentController{studentService: service}
 }
 
-// GetStudents
+// GetStudents godoc
 // @Summary Получить список всех студентов
 // @Description Возвращает список всех студентов в системе
 // @Tags students
 // @Security BearerAuth
-// @Param Authorization: Bearer header string true "Bearer токен"
+// @Param Authorization header string true "Bearer токен"
 // @Accept json
 // @Produce json
 // @Success 200 {array} models.Student
-// @Failure 500 {object} models.ErrorResponse
-// @Router /api/students [get]
+// @Failure 401 {object} map[string]string "Неавторизованный доступ"
+// @Failure 500 {object} map[string]string "Ошибка сервера"
+// @Router /students [get]
 func (sc *StudentController) GetStudents(c *gin.Context) {
-	students, err := sc.studentRepo.GetStudents()
+	students, err := sc.studentService.GetStudents(c.Request.Context())
 	if err != nil {
 		log.Println("Error fetching students:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch students"})
@@ -38,7 +38,7 @@ func (sc *StudentController) GetStudents(c *gin.Context) {
 	c.JSON(http.StatusOK, students)
 }
 
-// GetStudentById
+// GetStudentById godoc
 // @Summary Получить информацию о студенте
 // @Description Возвращает данные студента по его ID
 // @Tags students
@@ -48,13 +48,14 @@ func (sc *StudentController) GetStudents(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} models.Student
-// @Failure 400 {object} models.ErrorResponse
-// @Failure 404 {object} models.ErrorResponse
-// @Failure 500 {object} models.ErrorResponse
-// @Router /api/students/{id} [get]
+// @Failure 400 {object} map[string]string "Неверный запрос"
+// @Failure 401 {object} map[string]string "Неавторизованный доступ"
+// @Failure 404 {object} map[string]string "Студент не найден"
+// @Failure 500 {object} map[string]string "Ошибка сервера"
+// @Router /students/{id} [get]
 func (sc *StudentController) GetStudentById(ctx *gin.Context) {
 	id := ctx.Param("id")
-	student, err := sc.studentRepo.GetStudentsById(id)
+	student, err := sc.studentService.GetStudentById(ctx.Request.Context(), id)
 	if err != nil {
 		log.Println("Error fetching student:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch student"})
@@ -67,7 +68,7 @@ func (sc *StudentController) GetStudentById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, student)
 }
 
-// CreateStudent
+// CreateStudent godoc
 // @Summary Создать нового студента
 // @Description Добавляет нового студента в систему
 // @Tags students
@@ -79,25 +80,29 @@ func (sc *StudentController) GetStudentById(ctx *gin.Context) {
 // @Success 201 {object} models.Student
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
-// @Router /api/students [post]
+// @Router /students [post]
 func (sc *StudentController) CreateStudent(c *gin.Context) {
 	var student models.Student
-
 	if err := c.ShouldBindJSON(&student); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bind JSON" + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректные данные: " + err.Error()})
 		return
 	}
-
-	createdUser, err := sc.studentRepo.CreateStudent(&student)
+	userID, err := sc.studentService.CreateUserWithRole(c.Request.Context(), student.User, "student")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create student: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка создания пользователя: " + err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusCreated, createdUser)
+	student.ID = userID
+	student.User.ID = userID
+	createdStudent, err := sc.studentService.CreateStudent(c.Request.Context(), &student)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка создания профиля студента: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, createdStudent)
 }
 
-// UpdateStudent
+// UpdateStudent godoc
 // @Summary Обновить данные студента
 // @Description Обновляет информацию о студенте
 // @Tags students
@@ -110,7 +115,7 @@ func (sc *StudentController) CreateStudent(c *gin.Context) {
 // @Success 200 {object} models.Student
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
-// @Router /api/students/{id} [put]
+// @Router /students/{id} [put]
 func (sc *StudentController) UpdateStudent(c *gin.Context) {
 	id := c.Param("id")
 	var student models.Student
@@ -120,16 +125,9 @@ func (sc *StudentController) UpdateStudent(c *gin.Context) {
 		return
 	}
 
-	studentID, err := strconv.ParseUint(id, 10, 32)
-	if err != nil {
-		log.Println("Error converting id:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
+	student.ID = id
 
-	student.ID = uint(studentID)
-
-	updatedUser, err := sc.studentRepo.UpdateStudent(&student)
+	updatedUser, err := sc.studentService.UpdateStudent(c.Request.Context(), student)
 	if err != nil {
 		log.Println("Error updating student:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update student"})
@@ -139,7 +137,7 @@ func (sc *StudentController) UpdateStudent(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedUser)
 }
 
-// DeleteStudent
+// DeleteStudent godoc
 // @Summary Удалить студента
 // @Description Удаляет студента по его ID
 // @Tags students
@@ -149,10 +147,10 @@ func (sc *StudentController) UpdateStudent(c *gin.Context) {
 // @Success 204
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
-// @Router /api/students/{id} [delete]
+// @Router /students/{id} [delete]
 func (sc *StudentController) DeleteStudent(c *gin.Context) {
 	id := c.Param("id")
-	if err := sc.studentRepo.DeleteStudent(id); err != nil {
+	if err := sc.studentService.DeleteStudent(c.Request.Context(), id); err != nil {
 		log.Println("Error deleting student:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to delete student"})
 		return
@@ -160,7 +158,7 @@ func (sc *StudentController) DeleteStudent(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// EnrollStudentToCourse
+// EnrollStudentToCourse godoc
 // @Summary Записать студента на курс
 // @Description Записывает студента на указанный курс
 // @Tags students
@@ -171,15 +169,15 @@ func (sc *StudentController) DeleteStudent(c *gin.Context) {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
-// @Router /api/students/{student_id}/courses/{course_id} [post]
-func (c *StudentController) EnrollStudentToCourse(ctx *gin.Context) {
+// @Router /students/{student_id}/courses/{course_id} [post]
+func (sc *StudentController) EnrollStudentToCourse(ctx *gin.Context) {
 	studentID := ctx.Param("student_id")
 	courseID := ctx.Param("course_id")
 
 	ctx.Set("student_id", studentID)
 	ctx.Set("course_id", courseID)
 
-	if err := c.studentRepo.EnrollStudentToCourse(studentID, courseID); err != nil {
+	if err := sc.studentService.EnrollStudentToCourse(ctx.Request.Context(), studentID, courseID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка записи на курс", "details": err.Error()})
 		return
 	}
@@ -187,7 +185,7 @@ func (c *StudentController) EnrollStudentToCourse(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Студент успешно записан на курс"})
 }
 
-// GetStudentCourses
+// GetStudentCourses godoc
 // @Summary Получить курсы студента
 // @Description Возвращает список курсов, на которые записан студент
 // @Tags students
@@ -199,13 +197,13 @@ func (c *StudentController) EnrollStudentToCourse(ctx *gin.Context) {
 // @Success 200 {array} models.Course
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
-// @Router /api/students/{id}/courses [get]
+// @Router /students/{id}/courses [get]
 func (sc *StudentController) GetStudentCourses(ctx *gin.Context) {
 	studentID := ctx.Param("id")
 
-	courses, err := sc.studentRepo.GetStudentCourses(studentID)
+	courses, err := sc.studentService.GetStudentCourses(ctx.Request.Context(), studentID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка получения курсов студента", "details": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch student courses"})
 		return
 	}
 

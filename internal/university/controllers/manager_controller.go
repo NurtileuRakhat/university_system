@@ -4,19 +4,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"university_system/internal/university/models"
-	"university_system/internal/university/repository"
+	"university_system/internal/domain/models"
+	"university_system/internal/university/services"
 )
 
 type ManagerController struct {
-	managerRepo repository.ManagerRepository
+	managerService services.ManagerService
 }
 
-func NewManagerController(managerRepo repository.ManagerRepository) *ManagerController {
-	return &ManagerController{managerRepo: managerRepo}
+func NewManagerController(managerService services.ManagerService) *ManagerController {
+	return &ManagerController{managerService: managerService}
 }
 
-// GetManagers получает список всех менеджеров.
+// GetManagers godoc
 // @Summary Получить всех менеджеров
 // @Description Возвращает список всех менеджеров из базы данных.
 // @Tags managers
@@ -27,16 +27,16 @@ func NewManagerController(managerRepo repository.ManagerRepository) *ManagerCont
 // @Failure 500 {object} gin.H "Ошибка сервера"
 // @Router /managers [get]
 func (mc *ManagerController) GetManagers(c *gin.Context) {
-	managers, err := mc.managerRepo.GetManagers()
+	managers, err := mc.managerService.GetManagers(c.Request.Context())
 	if err != nil {
-		log.Println("Error fetching managers:", err)
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch managers"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"managers": managers})
+	c.JSON(http.StatusOK, managers)
 }
 
-// GetManagerById получает менеджера по ID.
+// GetManagerById godoc
 // @Summary Получить менеджера по ID
 // @Description Возвращает данные менеджера по его идентификатору.
 // @Tags managers
@@ -51,7 +51,7 @@ func (mc *ManagerController) GetManagers(c *gin.Context) {
 // @Router /managers/{id} [get]
 func (mc *ManagerController) GetManagerById(c *gin.Context) {
 	id := c.Param("id")
-	manager, err := mc.managerRepo.GetManagerById(id)
+	manager, err := mc.managerService.GetManagerById(c.Request.Context(), id)
 	if err != nil {
 		log.Println("Error fetching manager:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch manager"})
@@ -64,7 +64,7 @@ func (mc *ManagerController) GetManagerById(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"manager": manager})
 }
 
-// CreateManager создает нового менеджера.
+// CreateManager godoc
 // @Summary Создать менеджера
 // @Description Добавляет нового менеджера в систему.
 // @Tags managers
@@ -80,18 +80,25 @@ func (mc *ManagerController) GetManagerById(c *gin.Context) {
 func (mc *ManagerController) CreateManager(c *gin.Context) {
 	var manager models.Manager
 	if err := c.ShouldBindJSON(&manager); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректные данные: " + err.Error()})
 		return
 	}
-	newManager, err := mc.managerRepo.CreateManager(manager)
+	userID, err := mc.managerService.CreateUserWithRole(c.Request.Context(), manager.User, "manager")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create manager"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка создания пользователя: " + err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"manager": newManager})
+	manager.ID = userID
+	manager.User.ID = userID
+	createdManager, err := mc.managerService.CreateManager(c.Request.Context(), &manager)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка создания профиля менеджера: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, createdManager)
 }
 
-// UpdateManager обновляет данные менеджера.
+// UpdateManager godoc
 // @Summary Обновить менеджера
 // @Description Изменяет данные менеджера.
 // @Tags managers
@@ -107,18 +114,21 @@ func (mc *ManagerController) CreateManager(c *gin.Context) {
 func (mc *ManagerController) UpdateManager(c *gin.Context) {
 	var manager models.Manager
 	if err := c.ShouldBindJSON(&manager); err != nil {
+		log.Println("Error binding JSON:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	updatedManager, err := mc.managerRepo.UpdateManager(&manager)
+
+	updatedManager, err := mc.managerService.UpdateManager(c.Request.Context(), manager)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update manager"})
+		log.Println("Error updating manager:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update manager"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"manager": updatedManager})
 }
 
-// DeleteManager удаляет менеджера по ID.
+// DeleteManager godoc
 // @Summary Удалить менеджера
 // @Description Удаляет менеджера из системы по его идентификатору.
 // @Tags managers
@@ -130,14 +140,16 @@ func (mc *ManagerController) UpdateManager(c *gin.Context) {
 // @Router /managers/{id} [delete]
 func (mc *ManagerController) DeleteManager(c *gin.Context) {
 	id := c.Param("id")
-	if err := mc.managerRepo.DeleteManager(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete manager"})
+	err := mc.managerService.DeleteManager(c.Request.Context(), id)
+	if err != nil {
+		log.Println("Error deleting manager:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to delete manager"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Manager deleted successfully"})
 }
 
-// AssignTeacherToCourse назначает преподавателя на курс.
+// AssignTeacherToCourse godoc
 // @Summary Назначить преподавателя на курс
 // @Description Привязывает преподавателя к курсу.
 // @Tags managers
@@ -157,7 +169,7 @@ func (mc *ManagerController) AssignTeacherToCourse(c *gin.Context) {
 
 	log.Printf("Assigning teacher %s to course %s", teacherID, courseID)
 
-	if err := mc.managerRepo.AssignTeacherToCourse(teacherID, courseID); err != nil {
+	if err := mc.managerService.AssignTeacherToCourse(c.Request.Context(), teacherID, courseID); err != nil {
 		log.Println("Error assigning teacher to course:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to assign teacher to course",

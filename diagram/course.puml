@@ -1,0 +1,94 @@
+@startuml CourseOperations
+actor Teacher
+actor Manager
+actor Student
+participant "Gin Router" as API
+participant CourseController
+participant CourseService
+participant CourseRepository
+database DB
+
+== Create course ==
+Teacher -> API: POST /courses/
+API -> CourseController: CreateCourse(ctx, course)
+CourseController -> CourseService: CreateCourse(ctx, course)
+CourseService -> CourseRepository: CreateCourse(ctx, course)
+CourseRepository -> DB: INSERT INTO courses (...) RETURNING *;
+DB --> CourseRepository: Course
+CourseRepository --> CourseService: Course
+CourseService --> CourseController: Course
+CourseController --> API: 201 Created\n{course}
+API --> Teacher: response
+
+== Get course by id ==
+Student -> API: GET /courses/{id}
+API -> CourseController: GetCourseByID(ctx, id)
+CourseController -> CourseService: GetCourseByID(ctx, id)
+CourseService -> CourseRepository: GetCourseByID(ctx, id)
+CourseRepository -> DB: SELECT * FROM courses WHERE id = ?;
+DB --> CourseRepository: Course
+CourseRepository --> CourseService: Course
+CourseService --> CourseController: Course
+CourseController --> API: 200 OK\n{course}
+API --> Student: response
+
+== Get all courses ==
+Student -> API: GET /courses/
+API -> CourseController: GetAllCourses(ctx)
+CourseController -> CourseService: GetAllCourses(ctx)
+CourseService -> CourseRepository: GetCourses(ctx)
+CourseRepository -> DB: SELECT * FROM courses;
+DB --> CourseRepository: []Course
+CourseRepository --> CourseService: []Course
+CourseService --> CourseController: []Course
+CourseController --> API: 200 OK\n{courses}
+API --> Student: response
+
+== Update course ==
+Teacher -> API: PUT /courses/{id}
+API -> CourseController: UpdateCourse(ctx, id, course)
+CourseController -> CourseService: UpdateCourse(ctx, course)
+CourseService -> CourseRepository: UpdateCourse(ctx, course)
+CourseRepository -> DB: UPDATE courses SET ... WHERE id = ? RETURNING *;
+DB --> CourseRepository: Course
+CourseRepository --> CourseService: Course
+CourseService --> CourseController: Course
+CourseController --> API: 200 OK\n{course}
+API --> Teacher: response
+
+== Delete course ==
+Manager -> API: DELETE /courses/{id}
+API -> CourseController: DeleteCourse(ctx, id)
+CourseController -> CourseService: DeleteCourse(ctx, id)
+CourseService -> CourseRepository: DeleteCourse(ctx, id)
+CourseRepository -> DB: DELETE FROM courses WHERE id = ?;
+DB --> CourseRepository: result
+CourseRepository --> CourseService: nil
+CourseService --> CourseController: nil
+CourseController --> API: 204 No Content
+API --> Manager: response
+
+== Get course students ==
+Teacher -> API: GET /courses/{id}/students
+API -> CourseController: GetCourseStudents(ctx, id)
+CourseController -> CourseService: GetCourseStudents(ctx, id)
+CourseService -> CourseRepository: GetCourseStudents(ctx, id)
+CourseRepository -> DB: SELECT s.* FROM students s\n JOIN student_courses sc ON s.id=sc.student_id\n WHERE sc.course_id = ?;
+DB --> CourseRepository: []Student
+CourseRepository --> CourseService: []Student
+CourseService --> CourseController: []Student
+CourseController --> API: 200 OK\n{students}
+API --> Teacher: response
+
+== Get course teachers ==
+Teacher -> API: GET /courses/{id}/teachers
+API -> CourseController: GetCourseTeachers(ctx, id)
+CourseController -> CourseService: GetCourseTeachers(ctx, id)
+CourseService -> CourseRepository: GetCourseTeachers(ctx, id)
+CourseRepository -> DB: SELECT t.* FROM teachers t\n JOIN course_teachers ct ON t.id=ct.teacher_id\n WHERE ct.course_id = ?;
+DB --> CourseRepository: []Teacher
+CourseRepository --> CourseService: []Teacher
+CourseService --> CourseController: []Teacher
+CourseController --> API: 200 OK\n{teachers}
+API --> Teacher: response
+@enduml

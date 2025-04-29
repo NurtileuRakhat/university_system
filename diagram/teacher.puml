@@ -1,0 +1,81 @@
+@startuml TeacherOperations
+actor Manager
+actor Teacher
+participant "Gin Router" as API
+participant TeacherController
+participant TeacherService
+participant TeacherRepository
+database DB
+
+== Get all teachers ==
+Manager -> API: GET /teachers/
+API -> TeacherController: GetTeachers(ctx)
+TeacherController -> TeacherService: GetTeachers(ctx)
+TeacherService -> TeacherRepository: GetTeachers(ctx)
+TeacherRepository -> DB: SELECT * FROM teachers;
+DB --> TeacherRepository: []Teacher
+TeacherRepository --> TeacherService: []Teacher
+TeacherService --> TeacherController: []Teacher
+TeacherController --> API: 200 OK\n{teachers}
+API --> Manager: response
+
+== Get teacher by id ==
+Manager -> API: GET /teachers/{id}
+API -> TeacherController: GetTeacherByID(ctx, id)
+TeacherController -> TeacherService: GetTeacherById(ctx, id)
+TeacherService -> TeacherRepository: GetTeacherById(ctx, id)
+TeacherRepository -> DB: SELECT * FROM teachers WHERE id = ?;
+DB --> TeacherRepository: Teacher
+TeacherRepository --> TeacherService: Teacher
+TeacherService --> TeacherController: Teacher
+TeacherController --> API: 200 OK\n{teacher}
+API --> Manager: response
+
+== Create teacher ==
+Manager -> API: POST /teachers/
+API -> TeacherController: CreateTeacher(ctx, teacher)
+TeacherController -> TeacherService: CreateTeacher(ctx, teacher)
+TeacherService -> TeacherRepository: CreateTeacher(ctx, teacher)
+TeacherRepository -> DB: INSERT INTO teachers (...) RETURNING *;
+DB --> TeacherRepository: Teacher
+TeacherRepository --> TeacherService: Teacher
+TeacherService --> TeacherController: Teacher
+TeacherController --> API: 201 Created\n{teacher}
+API --> Admin: response
+
+== Update teacher ==
+Manager -> API: PUT /teachers/{id}
+API -> TeacherController: UpdateTeacher(ctx, id, teacher)
+TeacherController -> TeacherService: UpdateTeacher(ctx, teacher)
+TeacherService -> TeacherRepository: UpdateTeacher(ctx, teacher)
+TeacherRepository -> DB: UPDATE teachers SET ... WHERE id = ? RETURNING *;
+DB --> TeacherRepository: Teacher
+TeacherRepository --> TeacherService: Teacher
+TeacherService --> TeacherController: Teacher
+TeacherController --> API: 200 OK\n{teacher}
+API --> Manager: response
+
+== Delete teacher ==
+Manager -> API: DELETE /teachers/{id}
+API -> TeacherController: DeleteTeacher(ctx, id)
+TeacherController -> TeacherService: DeleteTeacher(ctx, id)
+TeacherService -> TeacherRepository: DeleteTeacher(ctx, id)
+TeacherRepository -> DB: DELETE FROM teachers WHERE id = ?;
+DB --> TeacherRepository: result
+TeacherRepository --> TeacherService: nil
+TeacherService --> TeacherController: nil
+TeacherController --> API: 204 No Content
+API --> Manager: response
+
+== Get teacher courses ==
+Teacher -> API: GET /teachers/{id}/courses
+API -> TeacherController: GetTeacherCourses(ctx, id)
+TeacherController -> TeacherService: GetTeacherCourses(ctx, id)
+TeacherService -> TeacherRepository: GetTeacherCourses(ctx, id)
+TeacherRepository -> DB: SELECT c.* FROM courses c\n WHERE c.teacher_id = ?;
+DB --> TeacherRepository: []Course
+TeacherRepository --> TeacherService: []Course
+TeacherService --> TeacherController: []Course
+TeacherController --> API: 200 OK\n{courses}
+API --> Teacher: response
+@enduml

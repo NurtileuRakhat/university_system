@@ -1,39 +1,68 @@
 @startuml UserCRUD
 actor Admin
-participant "API (Gin)" as Api
+participant "Gin Router" as API
 participant UserController
 participant UserService
 participant UserRepository
-database users
+database DB
 
 == Get all users ==
-Admin -> Api: GET /api/users
-Api -> UserController: GetUsers(ctx)
+Admin -> API: GET /api/users
+API -> UserController: GetUsers(ctx)
 UserController -> UserService: GetUsers(ctx)
 UserService -> UserRepository: GetUsers(ctx)
-UserRepository -> users: SELECT * FROM users
-users --> UserRepository: []User
+UserRepository -> DB: SELECT * FROM users;
+DB --> UserRepository: []User
 UserRepository --> UserService: []User
 UserService --> UserController: []User
-UserController --> Api: 200 OK\n{users}
+UserController --> API: 200 OK\n{users}
+API --> Admin: response
 
 == Get user by id ==
-Admin -> Api: GET /api/users/{id}
-Api -> UserController: GetUserById(...)
+Admin -> API: GET /api/users/{id}
+API -> UserController: GetUserById(ctx, id)
+UserController -> UserService: GetUserById(ctx, id)
+UserService -> UserRepository: GetUserByID(ctx, id)
+UserRepository -> DB: SELECT * FROM users WHERE id = ?;
+DB --> UserRepository: User
+UserRepository --> UserService: User
+UserService --> UserController: User
+UserController --> API: 200 OK\n{user}
+API --> Admin: response
 
 == Create user ==
-Admin -> Api: POST /api/users
-Api -> UserController: CreateUser(...)
-UserController -> UserService: CreateUser(...)
-UserService -> UserRepository: CreateUser(...)
-UserRepository -> users: INSERT INTO users...
-...
+Admin -> API: POST /api/users
+API -> UserController: CreateUser(ctx, user)
+UserController -> UserService: CreateUser(ctx, user)
+UserService -> UserRepository: CreateUser(ctx, user)
+UserRepository -> DB: INSERT INTO users (...) RETURNING *;
+DB --> UserRepository: User
+UserRepository --> UserService: User
+UserService --> UserController: User
+UserController --> API: 201 Created\n{user}
+API --> Admin: response
 
 == Update user ==
-Admin -> Api: PUT /api/users/{id}
-...
+Admin -> API: PUT /api/users/{id}
+API -> UserController: UpdateUser(ctx, id, user)
+UserController -> UserService: UpdateUser(ctx, user)
+UserService -> UserRepository: UpdateUser(ctx, user)
+UserRepository -> DB: UPDATE users SET ... WHERE id = ? RETURNING *;
+DB --> UserRepository: User
+UserRepository --> UserService: User
+UserService --> UserController: User
+UserController --> API: 200 OK\n{user}
+API --> Admin: response
 
 == Delete user ==
-Admin -> Api: DELETE /api/users/{id}
-...
+Admin -> API: DELETE /api/users/{id}
+API -> UserController: DeleteUser(ctx, id)
+UserController -> UserService: DeleteUser(ctx, id)
+UserService -> UserRepository: DeleteUser(ctx, id)
+UserRepository -> DB: DELETE FROM users WHERE id = ?;
+DB --> UserRepository: result
+UserRepository --> UserService: nil
+UserService --> UserController: nil
+UserController --> API: 204 No Content
+API --> Admin: response
 @enduml

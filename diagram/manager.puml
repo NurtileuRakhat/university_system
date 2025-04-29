@@ -1,0 +1,81 @@
+@startuml ManagerOperations
+actor Manager
+actor Admin
+participant "Gin Router" as API
+participant ManagerController
+participant ManagerService
+participant ManagerRepository
+database DB
+
+== Get all managers ==
+Manager -> API: GET /managers/
+API -> ManagerController: GetManagers(ctx)
+ManagerController -> ManagerService: GetManagers(ctx)
+ManagerService -> ManagerRepository: GetManagers(ctx)
+ManagerRepository -> DB: SELECT * FROM managers;
+DB --> ManagerRepository: []Manager
+ManagerRepository --> ManagerService: []Manager
+ManagerService --> ManagerController: []Manager
+ManagerController --> API: 200 OK\n{managers}
+API --> Manager: response
+
+== Get manager by id ==
+Manager -> API: GET /managers/{id}
+API -> ManagerController: GetManagerById(ctx, id)
+ManagerController -> ManagerService: GetManagerById(ctx, id)
+ManagerService -> ManagerRepository: GetManagerById(ctx, id)
+ManagerRepository -> DB: SELECT * FROM managers WHERE id = ?;
+DB --> ManagerRepository: Manager
+ManagerRepository --> ManagerService: Manager
+ManagerService --> ManagerController: Manager
+ManagerController --> API: 200 OK\n{manager}
+API --> Manager: response
+
+== Create manager ==
+Manager -> API: POST /managers/
+API -> ManagerController: CreateManager(ctx, manager)
+ManagerController -> ManagerService: CreateManager(ctx, manager)
+ManagerService -> ManagerRepository: CreateManager(ctx, manager)
+ManagerRepository -> DB: INSERT INTO managers (...) RETURNING *;
+DB --> ManagerRepository: Manager
+ManagerRepository --> ManagerService: Manager
+ManagerService --> ManagerController: Manager
+ManagerController --> API: 201 Created\n{manager}
+API --> Manager: response
+
+== Update manager ==
+Manager -> API: PUT /managers/{id}
+API -> ManagerController: UpdateManager(ctx, id, manager)
+ManagerController -> ManagerService: UpdateManager(ctx, manager)
+ManagerService -> ManagerRepository: UpdateManager(ctx, manager)
+ManagerRepository -> DB: UPDATE managers SET ... WHERE id = ? RETURNING *;
+DB --> ManagerRepository: Manager
+ManagerRepository --> ManagerService: Manager
+ManagerService --> ManagerController: Manager
+ManagerController --> API: 200 OK\n{manager}
+API --> Manager: response
+
+== Delete manager ==
+Admin -> API: DELETE /managers/{id}
+API -> ManagerController: DeleteManager(ctx, id)
+ManagerController -> ManagerService: DeleteManager(ctx, id)
+ManagerService -> ManagerRepository: DeleteManager(ctx, id)
+ManagerRepository -> DB: DELETE FROM managers WHERE id = ?;
+DB --> ManagerRepository: result
+ManagerRepository --> ManagerService: nil
+ManagerService --> ManagerController: nil
+ManagerController --> API: 204 No Content
+API --> Admin: response
+
+== Assign teacher to course ==
+Manager -> API: POST /managers/{id}/teachers/{tid}/courses/{cid}
+API -> ManagerController: AssignTeacherToCourse(ctx, id, tid, cid)
+ManagerController -> ManagerService: AssignTeacherToCourse(ctx, id, tid, cid)
+ManagerService -> ManagerRepository: AssignTeacherToCourse(ctx, id, tid, cid)
+ManagerRepository -> DB: INSERT INTO course_teachers (manager_id,teacher_id,course_id);
+DB --> ManagerRepository: result
+ManagerRepository --> ManagerService: nil
+ManagerService --> ManagerController: nil
+ManagerController --> API: 200 OK
+API --> Manager: response
+@enduml

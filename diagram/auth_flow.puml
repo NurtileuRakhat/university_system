@@ -1,0 +1,33 @@
+@startuml AuthFlow
+actor Client
+participant "Gin Router" as API
+participant AuthController
+participant AuthService
+participant UserRepository
+participant TokenProvider
+database DB
+
+== Login ==
+Client -> API: POST /login\n{username,password}
+API -> AuthController: Login(ctx)
+AuthController -> AuthService: Authenticate(username,password)
+AuthService -> UserRepository: GetUserByUsername(ctx, username)
+UserRepository -> DB: SELECT * FROM users WHERE username = ?;
+DB --> UserRepository: User
+UserRepository --> AuthService: User
+AuthService -> TokenProvider: GenerateTokens(user)
+TokenProvider --> AuthService: {accessToken, refreshToken}
+AuthService --> AuthController: tokens
+AuthController --> API: 200 OK\n{tokens}
+API --> Client: response
+
+== Refresh ==
+Client -> API: POST /refresh\n{refreshToken}
+API -> AuthController: Refresh(ctx)
+AuthController -> TokenProvider: ValidateRefresh(refreshToken)
+TokenProvider --> AuthController: userID
+AuthController -> TokenProvider: GenerateTokens(userID)
+TokenProvider --> AuthController: {accessToken, refreshToken}
+AuthController --> API: 200 OK\n{tokens}
+API --> Client: response
+@enduml

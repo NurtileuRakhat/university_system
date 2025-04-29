@@ -1,14 +1,13 @@
 package auth
 
 import (
-	"log"
-	"net/http"
-	"university_system/internal/university/models"
-	"university_system/internal/university/repository"
-	"university_system/pkg/databases"
-
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"log"
+	"net/http"
+	"university_system/internal/domain/models"
+	infraRepo "university_system/internal/infrastructure/repository"
+	"university_system/pkg/databases"
 )
 
 // Login
@@ -30,26 +29,26 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	userRepo := repository.NewUserRepository(databases.Instance)
-	user, err := userRepo.GetUserByUsername(loginData.Username)
+	userRepo := infraRepo.NewUserRepository(databases.Instance)
+	user, err := userRepo.GetUserByUsername(c.Request.Context(), loginData.Username)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "User not found"})
 		return
 	}
 
-	if err := user.CheckPassword(loginData.Password); err != nil {
+	if err := CheckPassword(user.Password, loginData.Password); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Invalid credentials"})
 		return
 	}
 
-	accessToken, err := GenerateAccessToken(user.Username)
+	accessToken, err := GenerateAccessToken(user.Username, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Could not generate access token"})
 		return
 	}
 
-	refreshToken, err := GenerateRefreshToken(user.Username)
+	refreshToken, err := GenerateRefreshToken(user.Username, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Could not generate refresh token"})
 		return
@@ -80,26 +79,39 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	token, err := ParseRefreshToken(refreshData.RefreshToken)
-	if err != nil || !token.Valid {
-		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "Invalid or expired refresh token"})
+	token, err := jwt.Parse(refreshData.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		return []byte(RefreshTokenSecret), nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "Invalid refresh token"})
+		return
+	}
+
+	if !token.Valid {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "Invalid refresh token"})
 		return
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "Could not parse claims"})
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "Invalid token claims"})
 		return
 	}
 
-	username := claims["username"].(string)
-	accessToken, err := GenerateAccessToken(username)
+	username, ok := claims["username"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, models.ErrorResponse{Message: "Invalid username claim"})
+		return
+	}
+
+	accessToken, err := GenerateAccessToken(username, claims["role"].(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Could not generate access token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, models.AccessTokenResponse{
-		AccessToken: accessToken,
+	c.JSON(http.StatusOK, gin.H{
+		"access_token": accessToken,
 	})
 }

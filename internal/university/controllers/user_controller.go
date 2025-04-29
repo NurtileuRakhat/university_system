@@ -4,17 +4,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"strconv"
-	"university_system/internal/university/models"
-	"university_system/internal/university/repository"
+	"university_system/internal/domain/models"
+	"university_system/internal/university/services"
 )
 
 type UserController struct {
-	UserRepo repository.UserRepository
+	UserService services.UserService
 }
 
-func NewUserController(userRepo repository.UserRepository) *UserController {
-	return &UserController{UserRepo: userRepo}
+func NewUserController(userService services.UserService) *UserController {
+	return &UserController{UserService: userService}
 }
 
 // GetUsers
@@ -30,7 +29,8 @@ func NewUserController(userRepo repository.UserRepository) *UserController {
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
-	users, err := uc.UserRepo.GetUsers()
+	ctx := c.Request.Context()
+	users, err := uc.UserService.GetUsers(ctx)
 	if err != nil {
 		log.Println("Error fetching users:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch users"})
@@ -39,32 +39,31 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-// Register
+// CreateUser
 // @Summary Создание пользователя
 // @Description Создаёт нового пользователя в системе
-// @Tags Authorization
+// @Tags users
 // @Accept  json
 // @Produce  json
 // @Param input body models.User true "Данные пользователя"
 // @Success 200 {object} models.User
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
-// @Router /register [post]
-func (uc *UserController) Register(c *gin.Context) {
+// @Router /api/users [post]
+func (uc *UserController) CreateUser(c *gin.Context) {
 	var user models.User
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bind JSON"})
 		return
 	}
-
-	createdUser, err := uc.UserRepo.CreateUser(&user)
+	ctx := c.Request.Context()
+	createdUser, err := uc.UserService.CreateUser(ctx, &user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusCreated, createdUser)
+	c.JSON(http.StatusOK, createdUser)
 }
 
 // GetUserById
@@ -82,10 +81,10 @@ func (uc *UserController) Register(c *gin.Context) {
 // @Router /api/users/{id} [get]
 func (uc *UserController) GetUserById(c *gin.Context) {
 	id := c.Param("id")
-	user, err := uc.UserRepo.GetUserById(id)
+	ctx := c.Request.Context()
+	user, err := uc.UserService.GetUserById(ctx, id)
 	if err != nil {
-		log.Println("Error fetching user:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to fetch user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	if user == nil {
@@ -114,27 +113,16 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		log.Println("Error binding JSON:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to bind JSON"})
 		return
 	}
-
-	userID, err := strconv.ParseUint(id, 10, 32)
+	user.ID = id
+	ctx := c.Request.Context()
+	updatedUser, err := uc.UserService.UpdateUser(ctx, user)
 	if err != nil {
-		log.Println("Error converting id:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	user.ID = uint(userID)
-
-	updatedUser, err := uc.UserRepo.UpdateUser(user)
-	if err != nil {
-		log.Println("Error updating user:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update user"})
-		return
-	}
-
 	c.JSON(http.StatusOK, updatedUser)
 }
 
@@ -150,9 +138,10 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 // @Router /api/users/{id} [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
-	if err := uc.UserRepo.DeleteUser(id); err != nil {
-		log.Println("Error deleting user:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to delete user"})
+	ctx := c.Request.Context()
+	err := uc.UserService.DeleteUser(ctx, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)

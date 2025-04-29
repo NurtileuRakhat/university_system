@@ -1,22 +1,21 @@
 package controller
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-	"university_system/internal/university/models"
-	"university_system/internal/university/repository"
+	"university_system/internal/domain/models"
+	"university_system/internal/university/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CourseController struct {
-	repo repository.CourseRepository
+	courseService services.CourseService
 }
 
-func NewCourseController(repo repository.CourseRepository) *CourseController {
-	return &CourseController{repo: repo}
+func NewCourseController(service services.CourseService) *CourseController {
+	return &CourseController{courseService: service}
 }
 
 // CreateCourse создает новый курс.
@@ -25,7 +24,7 @@ func NewCourseController(repo repository.CourseRepository) *CourseController {
 // @Tags courses
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer Token"
+// @Param Authorization header string true "Bearer токен"
 // @Param course body models.Course true "Данные курса"
 // @Success 201 {object} models.Course
 // @Failure 400 {object} gin.H "Ошибка валидации"
@@ -38,14 +37,14 @@ func (c *CourseController) CreateCourse(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	createdUser, err := c.repo.CreateCourse(course)
+	// teacher_id может быть пустым (null) или uint, не забываем обработать
+	createdCourse, err := c.courseService.CreateCourse(ctx.Request.Context(), &course)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create course: " + err.Error()})
 		return
 	}
-	fmt.Printf("Saving Course: %+v\n", course)
 
-	ctx.JSON(http.StatusCreated, createdUser)
+	ctx.JSON(http.StatusCreated, createdCourse)
 }
 
 // GetAllCourses получает список всех курсов.
@@ -53,13 +52,13 @@ func (c *CourseController) CreateCourse(ctx *gin.Context) {
 // @Description Возвращает список всех курсов в системе
 // @Tags courses
 // @Produce json
-// @Param Authorization header string true "Bearer Token"
+// @Param Authorization header string true "Bearer токен"
 // @Success 200 {array} models.Course
 // @Failure 500 {object} gin.H "Ошибка сервера"
 // @Router /courses [get]
 // @Security BearerAuth
 func (c *CourseController) GetAllCourses(ctx *gin.Context) {
-	courses, err := c.repo.GetAllCourses()
+	courses, err := c.courseService.GetAllCourses(ctx.Request.Context())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch courses"})
 		return
@@ -72,7 +71,7 @@ func (c *CourseController) GetAllCourses(ctx *gin.Context) {
 // @Description Возвращает курс по его уникальному идентификатору
 // @Tags courses
 // @Produce json
-// @Param Authorization header string true "Bearer Token"
+// @Param Authorization header string true "Bearer токен"
 // @Param id path int true "ID курса"
 // @Success 200 {object} models.Course
 // @Failure 400 {object} gin.H "Неверный ID"
@@ -80,14 +79,22 @@ func (c *CourseController) GetAllCourses(ctx *gin.Context) {
 // @Router /courses/{id} [get]
 // @Security BearerAuth
 func (c *CourseController) GetCourseByID(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
+	idParam := ctx.Param("id")
+	// Проверка корректности ID опциональна, так как мы теперь работаем со строками
+	// Но оставляем для совместимости с существующим кодом
+	if _, err := strconv.ParseUint(idParam, 10, 64); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
 		return
 	}
 
-	course, err := c.repo.GetCourseById(uint(id))
+	course, err := c.courseService.GetCourseByID(ctx.Request.Context(), idParam)
 	if err != nil {
+		log.Println("Error fetching course:", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch course"})
+		return
+	}
+
+	if course == nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Course not found"})
 		return
 	}
@@ -101,7 +108,7 @@ func (c *CourseController) GetCourseByID(ctx *gin.Context) {
 // @Tags courses
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer Token"
+// @Param Authorization header string true "Bearer токен"
 // @Param id path int true "ID курса"
 // @Param course body models.Course true "Новые данные курса"
 // @Success 200 {object} models.Course
@@ -110,38 +117,35 @@ func (c *CourseController) GetCourseByID(ctx *gin.Context) {
 // @Router /courses/{id} [put]
 // @Security BearerAuth
 func (c *CourseController) UpdateCourse(ctx *gin.Context) {
-	id := ctx.Param("id")
+	idParam := ctx.Param("id")
+	id, err := strconv.ParseUint(idParam, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
+		return
+	}
+
 	var course models.Course
 	if err := ctx.ShouldBindJSON(&course); err != nil {
-		log.Println("Error binding JSON:", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	courseID, err := strconv.ParseUint(id, 10, 32)
-	if err != nil {
-		log.Println("Error converting id:", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
-		return
-	}
-
-	course.ID = uint(courseID)
-
-	updatedUser, err := c.repo.UpdateCourse(course)
+	course.ID = string(id)
+	updatedCourse, err := c.courseService.UpdateCourse(ctx.Request.Context(), course)
 	if err != nil {
 		log.Println("Error updating course:", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update course"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update course"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, updatedUser)
+	ctx.JSON(http.StatusOK, updatedCourse)
 }
 
 // DeleteCourse удаляет курс по ID.
 // @Summary Удалить курс
 // @Description Удаляет курс из системы по его уникальному идентификатору
 // @Tags courses
-// @Param Authorization header string true "Bearer Token"
+// @Param Authorization header string true "Bearer токен"
 // @Param id path int true "ID курса"
 // @Success 200 {object} gin.H "Курс удален"
 // @Failure 400 {object} gin.H "Неверный ID"
@@ -149,18 +153,21 @@ func (c *CourseController) UpdateCourse(ctx *gin.Context) {
 // @Router /courses/{id} [delete]
 // @Security BearerAuth
 func (c *CourseController) DeleteCourse(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
+	idParam := ctx.Param("id")
+	// Проверка корректности ID
+	if _, err := strconv.ParseUint(idParam, 10, 64); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
 		return
 	}
 
-	if err := c.repo.DeleteCourse(uint(id)); err != nil {
+	err := c.courseService.DeleteCourse(ctx.Request.Context(), idParam)
+	if err != nil {
+		log.Println("Error deleting course:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete course"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "Course deleted"})
+	ctx.JSON(http.StatusOK, gin.H{"message": "Course deleted successfully"})
 }
 
 // GetCourseStudents получает список студентов, записанных на курс.
@@ -168,7 +175,7 @@ func (c *CourseController) DeleteCourse(ctx *gin.Context) {
 // @Description Возвращает список студентов, записанных на данный курс
 // @Tags courses
 // @Produce json
-// @Param Authorization header string true "Bearer Token"
+// @Param Authorization header string true "Bearer токен"
 // @Param id path int true "ID курса"
 // @Success 200 {array} models.Student
 // @Failure 400 {object} gin.H "Неверный ID"
@@ -176,18 +183,21 @@ func (c *CourseController) DeleteCourse(ctx *gin.Context) {
 // @Router /courses/{id}/students [get]
 // @Security BearerAuth
 func (c *CourseController) GetCourseStudents(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
+	idParam := ctx.Param("id")
+	// Проверка корректности ID
+	if _, err := strconv.ParseUint(idParam, 10, 64); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
 		return
 	}
 
-	students, err := c.repo.GetCourseStudents(id)
+	students, err := c.courseService.GetCourseStudents(ctx.Request.Context(), idParam)
 	if err != nil {
+		log.Println("Error fetching course students:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch students"})
 		return
 	}
-	ctx.JSON(http.StatusOK, students)
+
+	ctx.JSON(http.StatusOK, gin.H{"students": students})
 }
 
 // GetCourseTeachers получает список преподавателей курса.
@@ -195,7 +205,7 @@ func (c *CourseController) GetCourseStudents(ctx *gin.Context) {
 // @Description Возвращает список преподавателей, ведущих данный курс
 // @Tags courses
 // @Produce json
-// @Param Authorization header string true "Bearer Token"
+// @Param Authorization header string true "Bearer токен"
 // @Param id path int true "ID курса"
 // @Success 200 {array} models.Teacher
 // @Failure 400 {object} gin.H "Неверный ID"
@@ -203,16 +213,19 @@ func (c *CourseController) GetCourseStudents(ctx *gin.Context) {
 // @Router /courses/{id}/teachers [get]
 // @Security BearerAuth
 func (c *CourseController) GetCourseTeachers(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
+	idParam := ctx.Param("id")
+	// Проверка корректности ID
+	if _, err := strconv.ParseUint(idParam, 10, 64); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
 		return
 	}
 
-	teachers, err := c.repo.GetCourseTeachers(id)
+	teachers, err := c.courseService.GetCourseTeachers(ctx.Request.Context(), idParam)
 	if err != nil {
+		log.Println("Error fetching course teachers:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch teachers"})
 		return
 	}
-	ctx.JSON(http.StatusOK, teachers)
+
+	ctx.JSON(http.StatusOK, gin.H{"teachers": teachers})
 }

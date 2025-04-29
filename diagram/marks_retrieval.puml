@@ -1,0 +1,30 @@
+@startuml MarksRetrieval
+actor Admin
+actor Manager
+actor Teacher
+actor Student
+participant "Gin Router" as API
+participant MarkController
+participant GradeRepository
+database DB
+
+== Get student marks ==
+Student -> API: GET /marks/student/{student_id}
+API -> MarkController: GetStudentMarks(ctx, sid)
+MarkController -> GradeRepository: GetStudentMarks(ctx, sid)
+GradeRepository -> DB: SELECT * FROM grades WHERE student_id = ?;
+DB --> GradeRepository: []Grade
+GradeRepository --> MarkController: []Grade
+MarkController --> API: 200 OK\n{grades}
+API --> Student: response
+
+== Get course marks ==
+Teacher -> API: GET /marks/course/{course_id}
+API -> MarkController: GetCourseMarks(ctx, cid)
+MarkController -> GradeRepository: GetCourseMarks(ctx, cid)
+GradeRepository -> DB: SELECT * FROM grades WHERE course_id = ?;
+DB --> GradeRepository: []Grade
+GradeRepository --> MarkController: []Grade
+MarkController --> API: 200 OK\n{grades}
+API --> Teacher: response
+@enduml
