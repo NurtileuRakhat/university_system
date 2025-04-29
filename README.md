@@ -53,8 +53,7 @@ docker run -p 8080:8080 --env-file .env university-system
   go run ./cmd/main.go
   ```
 ### 5. Test
- ```go test ./internal/university/services/...
-```
+ ```go test ./internal/university/services/...```
 
 ### Swagger init
 ```swag init -g cmd/university/main.go --parseDependency --parseInternal```
