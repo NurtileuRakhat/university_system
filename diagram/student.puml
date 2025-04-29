@@ -1,0 +1,93 @@
+@startuml StudentOperations
+actor Manager
+actor Student
+participant "Gin Router" as API
+participant StudentController
+participant StudentService
+participant StudentRepository
+database DB
+
+== Create student ==
+Manager -> API: POST /students
+API -> StudentController: CreateStudent(ctx, student)
+StudentController -> StudentService: CreateStudent(ctx, student)
+StudentService -> StudentRepository: CreateStudent(ctx, student)
+StudentRepository -> DB: INSERT INTO students (...) RETURNING *;
+DB --> StudentRepository: Student
+StudentRepository --> StudentService: Student
+StudentService --> StudentController: Student
+StudentController --> API: 201 Created\n{student}
+API --> Manager: response
+
+== Get all students ==
+Manager -> API: GET /students/
+API -> StudentController: GetStudents(ctx)
+StudentController -> StudentService: GetStudents(ctx)
+StudentService -> StudentRepository: GetStudents(ctx)
+StudentRepository -> DB: SELECT * FROM students;
+DB --> StudentRepository: []Student
+StudentRepository --> StudentService: []Student
+StudentService --> StudentController: []Student
+StudentController --> API: 200 OK\n{students}
+API --> Manager: response
+
+== Get student by id ==
+Student -> API: GET /students/{id}
+API -> StudentController: GetStudentById(ctx, id)
+StudentController -> StudentService: GetStudentById(ctx, id)
+StudentService -> StudentRepository: GetStudentById(ctx, id)
+StudentRepository -> DB: SELECT * FROM students WHERE id = ?;
+DB --> StudentRepository: Student
+StudentRepository --> StudentService: Student
+StudentService --> StudentController: Student
+StudentController --> API: 200 OK\n{student}
+API --> Student: response
+
+== Update student ==
+Student -> API: PUT /students/{id}
+API -> StudentController: UpdateStudent(ctx, id, student)
+StudentController -> StudentService: UpdateStudent(ctx, student)
+StudentService -> StudentRepository: UpdateStudent(ctx, student)
+StudentRepository -> DB: UPDATE students SET ... WHERE id = ? RETURNING *;
+DB --> StudentRepository: Student
+StudentRepository --> StudentService: Student
+StudentService --> StudentController: Student
+StudentController --> API: 200 OK\n{student}
+API --> Student: response
+
+== Delete student ==
+Manager -> API: DELETE /students/{id}
+API -> StudentController: DeleteStudent(ctx, id)
+StudentController -> StudentService: DeleteStudent(ctx, id)
+StudentService -> StudentRepository: DeleteStudent(ctx, id)
+StudentRepository -> DB: DELETE FROM students WHERE id = ?;
+DB --> StudentRepository: result
+StudentRepository --> StudentService: nil
+StudentService --> StudentController: nil
+StudentController --> API: 204 No Content
+API --> Manager: response
+
+== Enroll student to course ==
+Student -> API: POST /students/{student_id}/courses/{course_id}
+API -> StudentController: EnrollStudentToCourse(ctx, sid, cid)
+StudentController -> StudentService: EnrollStudentToCourse(ctx, sid, cid)
+StudentService -> StudentRepository: EnrollStudentToCourse(ctx, sid, cid)
+StudentRepository -> DB: INSERT INTO student_courses(student_id,course_id);
+DB --> StudentRepository: result
+StudentRepository --> StudentService: nil
+StudentService --> StudentController: nil
+StudentController --> API: 200 OK
+API --> Student: response
+
+== Get student courses ==
+Student -> API: GET /students/{id}/courses
+API -> StudentController: GetStudentCourses(ctx, id)
+StudentController -> StudentService: GetStudentCourses(ctx, id)
+StudentService -> StudentRepository: GetStudentCourses(ctx, id)
+StudentRepository -> DB: SELECT c.* FROM courses c\n JOIN student_courses sc ON c.id=sc.course_id\n WHERE sc.student_id = ?;
+DB --> StudentRepository: []Course
+StudentRepository --> StudentService: []Course
+StudentService --> StudentController: []Course
+StudentController --> API: 200 OK\n{courses}
+API --> Student: response
+@enduml

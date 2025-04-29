@@ -1,0 +1,39 @@
+@startuml UserCRUD
+actor Admin
+participant "API (Gin)" as Api
+participant UserController
+participant UserService
+participant UserRepository
+database users
+
+== Get all users ==
+Admin -> Api: GET /api/users
+Api -> UserController: GetUsers(ctx)
+UserController -> UserService: GetUsers(ctx)
+UserService -> UserRepository: GetUsers(ctx)
+UserRepository -> users: SELECT * FROM users
+users --> UserRepository: []User
+UserRepository --> UserService: []User
+UserService --> UserController: []User
+UserController --> Api: 200 OK\n{users}
+
+== Get user by id ==
+Admin -> Api: GET /api/users/{id}
+Api -> UserController: GetUserById(...)
+
+== Create user ==
+Admin -> Api: POST /api/users
+Api -> UserController: CreateUser(...)
+UserController -> UserService: CreateUser(...)
+UserService -> UserRepository: CreateUser(...)
+UserRepository -> users: INSERT INTO users...
+...
+
+== Update user ==
+Admin -> Api: PUT /api/users/{id}
+...
+
+== Delete user ==
+Admin -> Api: DELETE /api/users/{id}
+...
+@enduml
